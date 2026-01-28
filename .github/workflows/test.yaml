@@ -13,11 +13,11 @@ jobs:
       - uses: ruby/setup-ruby@80740b3b13bf9857e28854481ca95a84e78a2bdf # v1.284.0
         with:
           ruby-version: 3.4
-      - name: Run build and tests(default)
-        run: rake -f mruby/Rakefile all test
-        env:
-          CONFIG_FILE: default.rb
       - name: Run build and tests(full core)
         run: rake -f mruby/Rakefile all test
         env:
           CONFIG_FILE: full_core.rb
+      - name: Run build and tests(default)
+        run: rake -f mruby/Rakefile all test
+        env:
+          CONFIG_FILE: default.rb
