@@ -10,6 +10,7 @@ jobs:
       - name: Inspect mkdtemp definition in MinGW headers
         shell: bash
         run: |
+          set -x
           # 1. GCCのインクルードパスを特定（標準のstdlib.hを探す）
           # echo | gcc -Wp,-v -E - 2>&1 は、プリプロセッサの探索パスを表示します
           INCLUDE_DIR=$(echo | gcc -Wp,-v -E - 2>&1 | grep "^ /c/mingw64" | sed 's/^ //g' | head -n 1)
