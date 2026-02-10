@@ -12,7 +12,7 @@ jobs:
         run: |
           which gcc
           gcc -v
-          echo "#include <_mingw.h>" | gcc -dM -E - | grep -e __MINGW -e MSYS || true
+          echo "#include <_mingw.h>" | gcc -dM -E - | grep -E "MINGW|MSYS|UCRT|MKDTEMP" || true
 
       - uses: ruby/setup-ruby@80740b3b13bf9857e28854481ca95a84e78a2bdf # v1.284.0
         with:
@@ -23,5 +23,5 @@ jobs:
         run: |
           which gcc
           gcc -v
-          echo "#include <_mingw.h>" | gcc -dM -E - | grep -e __MINGW -e MSYS || true
+          echo "#include <_mingw.h>" | gcc -dM -E - | grep -E "MINGW|MSYS|UCRT|MKDTEMP" || true
 
