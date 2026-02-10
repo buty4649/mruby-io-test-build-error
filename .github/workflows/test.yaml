@@ -10,10 +10,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: true
-      - uses: ruby/setup-ruby@80740b3b13bf9857e28854481ca95a84e78a2bdf # v1.284.0
-        with:
-          ruby-version: 3.4
       - name: Run build and tests(default)
         run: rake -f mruby/Rakefile -m test:run:serial
         env:
-          MRUBY_CONFIG: ci/gcc-clang
+          MRUBY_CONFIG: default
