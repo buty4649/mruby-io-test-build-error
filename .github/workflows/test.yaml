@@ -10,6 +10,7 @@ jobs:
       - name: Exhaustive search for mkdtemp in all MinGW headers
         shell: bash
         run: |
+          set +e
           echo "=== Identifying all include directories ==="
           # GCCの全インクルードパスを取得
           PATHS=$(echo | gcc -Wp,-v -E - 2>&1 | grep "^ " | sed 's/^ //g')
