@@ -12,8 +12,8 @@ jobs:
           which gcc
           gcc -v
           echo "#include <_mingw.h>" | gcc -dM -E - | grep __MINGW | grep VERSION || true
-          ls -lah C:\\msys64
-          grep -R mkdtemp C:\\msys64\\include
+          ls -lah C:\\msys64\\usr
+          grep -R mkdtemp C:\\msys64\\usr\\include
         shell: bash
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
