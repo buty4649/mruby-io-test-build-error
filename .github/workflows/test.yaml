@@ -7,56 +7,45 @@ jobs:
   test:
     runs-on: windows-latest
     steps:
-      - name: Find and Inspect stdlib.h
+      - name: Exhaustive search for mkdtemp in all MinGW headers
         shell: bash
         run: |
-          # GCCの検索パス一覧を取得し、その中から stdlib.h が存在するディレクトリを特定する
-          # 大文字小文字の違いや、C:/ と /c/ の違いを無視するために tr と grep -i を活用
-          
-          echo "=== Detecting Include Paths ==="
+          echo "=== Identifying all include directories ==="
+          # GCCの全インクルードパスを取得
           PATHS=$(echo | gcc -Wp,-v -E - 2>&1 | grep "^ " | sed 's/^ //g')
-          echo "$PATHS"
           
-          STDLIB_PATH=""
+          # パスをUnix形式に変換して配列に格納
+          UNIX_PATHS=()
           for p in $PATHS; do
-            # Windows形式のパスをUnix形式に変換しつつ、stdlib.hを探す
-            unix_p=$(echo "$p" | sed -e 's/\\/\//g' -e 's/^\([A-Za-z]\):/\/\1/')
-            if [ -f "$unix_p/stdlib.h" ]; then
-              STDLIB_PATH="$unix_p/stdlib.h"
-              break
-            fi
+            UNIX_PATHS+=($(echo "$p" | sed -e 's/\\/\//g' -e 's/^\([A-Za-z]\):/\/\1/'))
           done
 
-          if [ -z "$STDLIB_PATH" ]; then
-            echo "❌ Error: stdlib.h not found in any include path."
-            exit 1
-          fi
+          echo "Searching for 'mkdtemp' in: ${UNIX_PATHS[@]}"
+          
+          # 1. 広範囲に検索し、ファイルリストを取得
+          # 見つかったファイル名を重複なく取得します
+          FOUND_FILES=$(grep -rlEi "mkdtemp" "${UNIX_PATHS[@]}" 2>/dev/null | sort -u)
 
-          echo "=== Target Header Found ==="
-          echo "Path: $STDLIB_PATH"
-
-          echo "=== Checking for mkdtemp definition ==="
-          # 大文字小文字を区別せず検索
-          if grep -i "mkdtemp" "$STDLIB_PATH"; then
-            echo "✅ mkdtemp keyword found!"
-            echo "--- Context ---"
-            grep -i -C 5 "mkdtemp" "$STDLIB_PATH"
+          if [ -z "$FOUND_FILES" ]; then
+            echo "❌ Result: 'mkdtemp' was not found in any header file in the include paths."
+            
+            # 念のため、stdlib.h の中身を cat して構造を確認する
+            # (一番可能性が高い stdlib.h を cat する指示に対応)
+            for p in "${UNIX_PATHS[@]}"; do
+              if [ -f "$p/stdlib.h" ]; then
+                echo "=== Dumping $p/stdlib.h for manual inspection ==="
+                cat "$p/stdlib.h"
+                break
+              fi
+            done
           else
-            echo "❌ mkdtemp NOT found in $STDLIB_PATH"
-            echo "--- Beginning of file (first 50 lines) ---"
-            head -n 50 "$STDLIB_PATH"
-          fi
+            echo "✅ Found 'mkdtemp' in the following file(s):"
+            echo "$FOUND_FILES"
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          submodules: true
-      - uses: ruby/setup-ruby@80740b3b13bf9857e28854481ca95a84e78a2bdf # v1.284.0
-        with:
-          ruby-version: 3.4
-      - run: |
-          set -x
-          which gcc
-          gcc -v
-          echo "#include <_mingw.h>" | gcc -dM -E - | grep __MINGW | grep VERSION || true
-          echo "#include <stdlib.h>" | gcc -D_GNU_SOURCE -E -dD - | grep mkdtemp
-        shell: bash
+            for f in $FOUND_FILES; do
+              echo "================================================================"
+              echo "FILE: $f"
+              echo "================================================================"
+              cat "$f"
+            done
+          fi
