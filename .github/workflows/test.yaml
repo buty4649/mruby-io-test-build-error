@@ -7,14 +7,41 @@ jobs:
   test:
     runs-on: windows-latest
     steps:
-      - run: |
-          set -x
-          which gcc
-          gcc -v
-          echo "#include <_mingw.h>" | gcc -dM -E - | grep __MINGW | grep VERSION || true
-          ls -lah C:\\msys64\\usr
-          grep -R mkdtemp C:\\msys64\\usr\\include
+      - name: Inspect mkdtemp definition in MinGW headers
         shell: bash
+        run: |
+          # 1. GCCのインクルードパスを特定（標準のstdlib.hを探す）
+          # echo | gcc -Wp,-v -E - 2>&1 は、プリプロセッサの探索パスを表示します
+          INCLUDE_DIR=$(echo | gcc -Wp,-v -E - 2>&1 | grep "^ /c/mingw64" | sed 's/^ //g' | head -n 1)
+          
+          if [ -z "$INCLUDE_DIR" ]; then
+            echo "Error: Could not find include directory under /c/mingw64"
+            exit 1
+          fi
+
+          TARGET_HEADER="$INCLUDE_DIR/stdlib.h"
+          echo "Searching in: $TARGET_HEADER"
+
+          # 2. mkdtemp が定義されているか判定
+          if grep -q "mkdtemp" "$TARGET_HEADER"; then
+            echo "✅ mkdtemp found in $TARGET_HEADER"
+            
+            # 3. 定義周辺の行を表示（前後5行ずつ）
+            echo "--- Context around mkdtemp definition ---"
+            grep -C 5 "mkdtemp" "$TARGET_HEADER"
+            
+            # 4. ファイル全体をcatする（非常に長いので、念のためgrepの結果だけで十分かもしれませんが、指示通り実行します）
+            # echo "--- Full file content ---"
+            # cat "$TARGET_HEADER"
+          else
+            echo "❌ mkdtemp is NOT defined in $TARGET_HEADER"
+            
+            # 他のヘッダ（io.hなど）に隠れていないか一応確認
+            echo "Checking other headers in the same directory..."
+            grep -l "mkdtemp" "$INCLUDE_DIR"/*.h || echo "No other headers contain mkdtemp."
+          fi
+        shell: bash
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: true
