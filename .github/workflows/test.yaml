@@ -16,4 +16,4 @@ jobs:
       - name: Run build and tests(default)
         run: rake -f mruby/Rakefile -m test:run:serial
         env:
-          CONFIG_FILE: default.rb
+          MRUBY_CONFIG: ci/gcc-clang
