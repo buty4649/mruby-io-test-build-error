@@ -7,46 +7,21 @@ jobs:
   test:
     runs-on: windows-latest
     steps:
-      - name: Exhaustive search for mkdtemp in all MinGW headers
+      - name: Check _MSYS_
         shell: bash
         run: |
-          set +e
-          echo "=== Identifying all include directories ==="
-          # GCCの全インクルードパスを取得
-          PATHS=$(echo | gcc -Wp,-v -E - 2>&1 | grep "^ " | sed 's/^ //g')
-          
-          # パスをUnix形式に変換して配列に格納
-          UNIX_PATHS=()
-          for p in $PATHS; do
-            UNIX_PATHS+=($(echo "$p" | sed -e 's/\\/\//g' -e 's/^\([A-Za-z]\):/\/\1/'))
-          done
+          which gcc
+          gcc -v
+          echo "#include <_mingw.h>" | gcc -dM -E - | grep -e __MINGW -e MSYS || true
 
-          echo "Searching for 'mkdtemp' in: ${UNIX_PATHS[@]}"
-          
-          # 1. 広範囲に検索し、ファイルリストを取得
-          # 見つかったファイル名を重複なく取得します
-          FOUND_FILES=$(grep -rlEi "mkdtemp" "${UNIX_PATHS[@]}" 2>/dev/null | sort -u)
+      - uses: ruby/setup-ruby@80740b3b13bf9857e28854481ca95a84e78a2bdf # v1.284.0
+        with:
+          ruby-version: 3.4
 
-          if [ -z "$FOUND_FILES" ]; then
-            echo "❌ Result: 'mkdtemp' was not found in any header file in the include paths."
-            
-            # 念のため、stdlib.h の中身を cat して構造を確認する
-            # (一番可能性が高い stdlib.h を cat する指示に対応)
-            for p in "${UNIX_PATHS[@]}"; do
-              if [ -f "$p/stdlib.h" ]; then
-                echo "=== Dumping $p/stdlib.h for manual inspection ==="
-                cat "$p/stdlib.h"
-                break
-              fi
-            done
-          else
-            echo "✅ Found 'mkdtemp' in the following file(s):"
-            echo "$FOUND_FILES"
+      - name: Check _MSYS_
+        shell: bash
+        run: |
+          which gcc
+          gcc -v
+          echo "#include <_mingw.h>" | gcc -dM -E - | grep -e __MINGW -e MSYS || true
 
-            for f in $FOUND_FILES; do
-              echo "================================================================"
-              echo "FILE: $f"
-              echo "================================================================"
-              cat "$f"
-            done
-          fi
