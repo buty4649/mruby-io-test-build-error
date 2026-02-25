@@ -4,7 +4,7 @@ on:
   pull_request:
 
 jobs:
-  test:
+  check_msys:
     runs-on: windows-latest
     steps:
       - name: Check _MSYS_
@@ -25,3 +25,14 @@ jobs:
           gcc -v
           echo "#include <_mingw.h>" | gcc -dM -E -
 
+  build_test:
+    runs-on: windows-latest
+    steps:
+      - uses: ruby/setup-ruby@80740b3b13bf9857e28854481ca95a84e78a2bdf # v1.284.0
+        with:
+          ruby-version: 3.4
+
+      - name: Build
+        run: rake -f mruby/Rakefile -m test:run:serial
+        env:
+          MRUBY_CONFIG: default
