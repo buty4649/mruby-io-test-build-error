@@ -28,6 +28,10 @@ jobs:
   build_test:
     runs-on: windows-latest
     steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+
       - uses: ruby/setup-ruby@80740b3b13bf9857e28854481ca95a84e78a2bdf # v1.284.0
         with:
           ruby-version: 3.4
