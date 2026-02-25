@@ -1,0 +1,54 @@
+name: Test
+
+on:
+  pull_request:
+
+jobs:
+  check_msys:
+    runs-on: windows-latest
+    steps:
+      - name: Check _MSYS_
+        shell: bash
+        run: |
+          which gcc
+          gcc -v
+          echo "#include <_mingw.h>" | gcc -dM -E -
+
+      - uses: ruby/setup-ruby@80740b3b13bf9857e28854481ca95a84e78a2bdf # v1.284.0
+        with:
+          ruby-version: 3.4
+
+      - name: Check _MSYS_
+        shell: bash
+        run: |
+          which gcc
+          gcc -v
+          echo "#include <_mingw.h>" | gcc -dM -E -
+
+  build_test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      - uses: ruby/setup-ruby@80740b3b13bf9857e28854481ca95a84e78a2bdf # v1.284.0
+        with:
+          ruby-version: 3.4
+
+      - name: Build
+        run: rake -f mruby/Rakefile -m test:run:serial
+        env:
+          MRUBY_CONFIG: default
+
+  build_test_without_setup-ruby:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      - name: Build
+        run: rake -f mruby/Rakefile -m test:run:serial
+        env:
+          MRUBY_CONFIG: default
