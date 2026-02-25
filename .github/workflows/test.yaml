@@ -40,3 +40,15 @@ jobs:
         run: rake -f mruby/Rakefile -m test:run:serial
         env:
           MRUBY_CONFIG: default
+
+  build_test_without_setup-ruby:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      - name: Build
+        run: rake -f mruby/Rakefile -m test:run:serial
+        env:
+          MRUBY_CONFIG: default
